@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "9E82FCFAE1D5F399EF6E0D3279A4B3ED"
+               BlueprintIdentifier = "BBD342067BB5928B37EC85FA844D7BAB"
                BuildableName = "Pods_redhathotelTests.framework"
                BlueprintName = "Pods-redhathotelTests"
                ReferencedContainer = "container:Pods.xcodeproj">
@@ -26,7 +26,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
       </Testables>
@@ -37,7 +36,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -47,7 +45,7 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "9E82FCFAE1D5F399EF6E0D3279A4B3ED"
+            BlueprintIdentifier = "BBD342067BB5928B37EC85FA844D7BAB"
             BuildableName = "Pods_redhathotelTests.framework"
             BlueprintName = "Pods-redhathotelTests"
             ReferencedContainer = "container:Pods.xcodeproj">
