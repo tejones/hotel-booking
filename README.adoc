@@ -1,5 +1,5 @@
-image::summit-logo.png[Summit Logo]
-= Hotel Booking Demo
+image::redhatraffle-logo.png[Summit Logo]
+= Red Hat Raffle
 
 IMPORTANT: Requires Node.js 8.11 or greater and `npm` 5.6 or greater.
 
@@ -8,13 +8,13 @@ IMPORTANT: Requires Maven 3.3 or greater.
 IMPORTANT: Requires Openshift Container Platform 3.7 or greater.
 
 == Cloning the source code
-To clone the Hotel Booking project on your local environment:
+To clone the Raffle project on your local environment:
 
 [source,bash,options="nowrap",subs="attributes+"]
 ----
-$ git clone git@github.com:mcouliba/hotel-booking
+$ git clone git@github.com:tejones/redhat-raffle
 
-$ cd hotel-booking
+$ cd redhat-raffle
 ----
 
 == Openshift Project
@@ -22,23 +22,23 @@ To create the project on your Openshift Cluster:
 
 [source,bash,options="nowrap",subs="attributes+"]
 ----
-$ oc new-project hotelbooking --display-name="Hotel Booking" --description="Hotel Booking Demo"
+$ oc new-project redhat-raffle --display-name="Red Hat Raffle" --description="Red Hat Raffle"
 ----
 
-== Monolith Database
-To initialize the Monolith Database:
+== Database
+To initialize the database:
 
 [source,bash,options="nowrap",subs="attributes+"]
 ----
-$ cd hotel-booking-monolithdb
+$ cd raffle-persistance
 
-$ oc new-app postgresql-persistent --name=monolithdb -p DATABASE_SERVICE_NAME=monolithdb -p POSTGRESQL_USER=postgresql -p POSTGRESQL_PASSWORD=postgresql -p POSTGRESQL_DATABASE=monolithdb
+$ oc new-app postgresql-persistent --name=raffle-postgres -p DATABASE_SERVICE_NAME=raffle-postgres -p POSTGRESQL_USER=postgresql -p POSTGRESQL_PASSWORD=postgresql -p POSTGRESQL_DATABASE=raffle-persistance
 
 $ oc rsync sql/ <POD_NAME>:/opt/app-root/src
 
 $ oc rsh <POD_NAME> 
 
-sh-4.2$ PGPASSWORD=$POSTGRESQL_PASSWORD psql -h monolithdb $POSTGRESQL_DATABASE $POSTGRESQL_USER -f hotel-booking.sql
+sh-4.2$ PGPASSWORD=$POSTGRESQL_PASSWORD psql -h raffle-postgres $POSTGRESQL_DATABASE $POSTGRESQL_USER -f raffle-postgres.ddl
 
 sh-4.2$  exit
 
@@ -50,7 +50,7 @@ To initialize the Virtual Layer:
 
 [source,bash,options="nowrap",subs="attributes+"]
 ----
-$ cd hotel-booking-virtuallayer
+$ cd redhat-raffle-virtuallayer
 
 $ oc create -f https://raw.githubusercontent.com/jboss-openshift/application-templates/master/secrets/datavirt-app-secret.yaml
 
@@ -60,9 +60,9 @@ $ oc secrets new datavirt-app-config env/datasources.env
 
 $ oc create sa datavirt-service-account
 
-$ oc adm policy add-role-to-user view system:serviceaccount:hotelbooking:datavirt-service-account
+$ oc adm policy add-role-to-user view system:serviceaccount:redhat-raffle:datavirt-service-account
 
-$ oc new-app datavirt64-extensions-support-s2i  --name=virtuallayer -p APPLICATION_NAME=virtuallayer -p TEIID_USERNAME=teiidUser -p TEIID_PASSWORD='redhat1!' -p SOURCE_REPOSITORY_URL='https://github.com/mcouliba/hotel-booking.git' -p CONTEXT_DIR='hotel-booking-virtual-layer' -p VDB_DIRS=vdb -p EXTENSIONS_REPOSITORY_URL='https://github.com/mcouliba/hotel-booking.git' -p EXTENSIONS_DIR='hotel-booking-virtual-layer/extensions'
+$ oc new-app datavirt64-extensions-support-s2i  --name=virtuallayer -p APPLICATION_NAME=virtuallayer -p TEIID_USERNAME=teiidUser -p TEIID_PASSWORD='redhat1!' -p SOURCE_REPOSITORY_URL='https://github.com/tejones/redhat-raffle.git' -p CONTEXT_DIR='redhat-raffle-virtual-layer' -p VDB_DIRS=vdb -p EXTENSIONS_REPOSITORY_URL='https://github.com/tejones/redhat-raffle.git' -p EXTENSIONS_DIR='redhat-raffle-virtual-layer/extensions'
 
 $ cd ..
 ----
@@ -72,9 +72,9 @@ To initialize the Shared Cache:
 
 [source,bash,options="nowrap",subs="attributes+"]
 ----
-$ oc policy add-role-to-user view system:serviceaccount:hotel-booking:default
+$ oc policy add-role-to-user view system:serviceaccount:redhat-raffle:default
 
-$ oc new-app datagrid71-basic --name=sharedcache -p APPLICATION_NAME=sharedcache -p CACHE_NAMES=bookingStateCache
+$ oc new-app datagrid71-basic --name=sharedcache -p APPLICATION_NAME=sharedcache -p CACHE_NAMES=raffleStateCache
 ----
 
 == Microservices
@@ -82,174 +82,51 @@ To initialize the microservices:
 
 [source,bash,options="nowrap",subs="attributes+"]
 ----
-$ cd hotel-booking-microservice
+$ cd raffle-microservice
 
-$ cd booking-state-service
+$ cd raffle-state-service
 $ mvn clean fabric8:deploy -Popenshift -DskipTests
 $ cd ..
 
-$ cd hotel-service
+$ cd raffle-service
 $ mvn clean fabric8:deploy -Popenshift -DskipTests
 $ cd ..
 
-$ cd hotel-service-v2
+$ cd scan-service
 $ mvn clean fabric8:deploy -Popenshift -DskipTests
-$ cd ..
-
-$ cd inventory-service
-$ mvn clean fabric8:deploy -Popenshift -DskipTests
-$ cd ..
 
 $ cd ..
 ----
 
-To set up a A/B deployment for 'hotel-service':
+
+== Web Application
+To initialize the Web App :
 
 [source,bash,options="nowrap",subs="attributes+"]
 ----
-$ cd hotel-booking-microservice
+$ cd raffle-web-app
 
-$ cd hotel-service-v2
-$ mvn clean fabric8:deploy -Popenshift -DskipTests
-$ cd ..
-
-$ oc set route-backends hotel-service hotel-service=50 hotel-service-v2=50
+$ mv .nodeshift_v1 .nodeshift
+$ npm run openshift
 
 $ cd ..
 ----
 
-== Data Model
-The following are the data model entities:
+To set up a A/B deployment:
 
-. Country - a country. Each record has the following properties:
-	.. name, 
-	.. ISO country code, and
-	.. ISO currency code.
-. City - a city. Each record has the following properties:
-	.. country, 
-	.. name, and
-	.. postal code.
-. Customer - a hotel customer. Each record has the following properties:
-	.. name, 
-	.. password, 
-	.. email, 
-	.. rewards ID number, 
-	.. date became a member, 
-	.. address, and
-	.. city.
-. Acceptance - a customer's acceptance to the releasing of personal data for various statements. Each record has the following properties:
-    .. customer,
-    .. statement 1 acceptance flag,
-    .. statement 2 acceptance flag,
-    .. statement 3 acceptance flag.
-. Payment Information - a customer's payment information. Each record has the following properties:
-	.. customer, 
-	.. credit card number, 
-	.. credit card type, 
-	.. expiration date, and 
-	.. security code. 
-. Hotel Chain - a hotel chain (ex., Red Hat Hotel). Each record has the following properties:
-	.. name.
-. Hotel - a hotel. Each record has the following properties:
-	.. hotel chain, 
-	.. country, 
-	.. name, 
-	.. address, 
-	.. city, 
-	.. email,
-	.. stars, and 
-	.. URL.
-. Room Configuration - a room configurations. Each record has the following properties:
-	.. has separate living area indicator, 
-	.. has microwave indicator, 
-	.. number of adjoining rooms, 
-	.. number of double beds, 
-	.. number of king beds, 
-	.. number of pets allowed, 
-	.. number of pullouts, 
-	.. number of queen beds, 
-	.. has refrigerator indicator, and 
-	.. allows smoking indicator. 
-. Room - a hotel room. Each record has the following properties:
-	.. hotel, 
-	.. room configuration, 
-	.. room number, 
-	.. floor, and 
-	.. daily rate. 
-. Room Availability - a room availability. Each record has the following properties:
-	.. room, 
-	.. date, and
-	.. available indicator. 
-. Reservation - a hotel room reservation. Each record has the following properties:
-	.. customer, 
-	.. room, 
-	.. checkin date, 
-	.. checkout date,
-	.. daily rate, and
-	.. status.
-. Payment - a payment for a hotel stay. Each record has the following properties:
-	.. reservation, 
-	.. payment information, and 
-	.. amount. 
+[source,bash,options="nowrap",subs="attributes+"]
+----
+$ cd raffle-web-app
 
-== Data Generator
-The data generator is a Java application that generates a Postgres schema DDL and insert statements. The data generator code is located in the *+data-generator+* folder here:
+$ vi package.json #Change the "name" parameter to "raffle-web-app-v2"
+$ vi src/components/ListView/RoomListView.js #Replace "abtesting hidden" by "abtesting"
+$ npm run openshift
 
-https://github.com/mcouliba/hotel-booking
+$ oc set route-backends raffle-web-app raffle-web-app=25 raffle-web-app-v2=75
 
-To generate the DDL file, execute the *+com.redhat.hotelbooking.datagen.DataModelGenerator+* class. The generator outputs a file called *+hotel-booking.ddl+* which is located in the *+resources/generated+*
-folder. 
+$ cd ..
+----
 
-There are settings in the code that control the generated DDL. Although these settings currently can only be set by changing the code, it would not be hard to also be able to set these via a command-line argument.
 
-Settings
-~~~~~~~~
-
-There are settings in two different places:
-
-. DataModelGenerator - these settings control which DDL statements.
-. DataProvider - these settings control how many insert statements are generated and set min/max values of the generated data.
-
-.DataModelGenerator Settings
-[options="header"]
-|==========================================================================
-|Setting                       |Default Value|
-|verbose                       |false|turns on/off console messages
-|generateDropStatements        |true|
-|generateCreateTableStatements |true|
-|generateInsertStatements      |true|
-|outputFileName                |resources/generated/hotel-booking.ddl|
-|==========================================================================
-
-.DataProvider Settings
-[options="header"]
-|==========================================================================
-|Setting                       |Default Value|
-|oldestMembershipDate          |The date data was generated minus 10 years|  
-|firstReservationDate          |The date data was generated|
-|generateRoomNotAvailableRecord|false|
-|maxNumHotelsPerCityToGenerate |2|
-|numDaysAvailabilityPerRoom    |60|
-|numCustomersToGenerate        |50|
-|numReservationsToGenerate     |100|
-|numRoomConfigsToGenerate      |100|
-|numRoomsPerHotel              |50|
-|roomAvailabilityStartId       |8000|
-|customerStartId               |400|
-|hotelStartId                  |800|
-|paymentInfoStartId            |1000|
-|reservationStartId            |2000|
-|roomConfigStartId             |700|
-|roomStartId                   |3000|
-|paymentStartId                |7000|
-|==========================================================================
-== Red Hat Hotel Mobile App
-The mobile application for this demo is written in Swift for iOs. It runs on iPad and iPhone devices and simulators. Because of the built-in integration with the web app running on OpenShift, it is best to run on an iPad to be able to see the web app on a larger screen.
-
-To run the app, download and install the latest version of *+xCode+* from https://developer.apple.com/xcode/. To launch the xcode project from your local cloned version of hotel-booking, click on https://github.com/mcouliba/hotel-booking/tree/master/mobile-app/ios/redhathotel/redhathotel.xcworkspace or open directly from the xcode IDE. With the project open in xcode, you should be able to run the app using the device of your choice in the xcode simulator by clicking the run button in the upper left of the xcode IDE.
-
-The first screen is the Login screen. This requires a user email from the customer table. The password can be anything you want. The user email will be checked against the customer table using the customer service in OpenShift. If the customer's country of residence is within the EU, the user will be prompted to accept or deny the GDPR permissions for data sharing. Selecting "Don't ask me again" in this dialog will prevent this prompt from coming up in future sessions.
-
-The next screen is the reservations screen which shows all reservations and their statuses. There is also a button to "Manage Reservations" at the top of the screen. This will allow you to login to the web app to create new reservations.
-
-You can also check-in or view your digital room key (a QR Code) for a reservation. From the "Room Key" view, you can also check out by clicking the "Check out" link at the top.
+== Red Hat Raffle Mobile App
+{Raffle App instructions here}

@@ -1,0 +1,21 @@
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.ModalCloseButton = exports.Modal = undefined;
+
+var _Modal = require('./Modal');
+
+var _Modal2 = _interopRequireDefault(_Modal);
+
+var _ModalCloseButton = require('./ModalCloseButton');
+
+var _ModalCloseButton2 = _interopRequireDefault(_ModalCloseButton);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+_Modal2.default.CloseButton = _ModalCloseButton2.default;
+
+exports.Modal = _Modal2.default;
+exports.ModalCloseButton = _ModalCloseButton2.default;
